@@ -61,46 +61,32 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements) {
-  /* Remove existing data */
-  containerMovements.innerHTML = '';
-
-  movements.forEach(function (mov, i) {
-    const type = mov > 0 ? 'deposit' : 'withdrawal';
-
-    const html = `
-    <div class="movements__row">
-      <div class="movements__type movements__type--${type}">${
-      i + 1
-    } ${type}</div>
-      <div class="movements__value">${mov}</div>
-    </div>`;
-
-    // This has no options where to insert the html into the container
-    // containerMovements.innerHTML += html;
-
-    // or
-
-    // This has options where to insert the html into the container
-    /* beforebegin, afterbegin, beforeend, afterend */
-    /* 
-      beforebegin
-      <p>
-        afterbegin
-        beforeend
-      </p>
-      afteren
-    */
-    containerMovements.insertAdjacentHTML('afterbegin', html);
-  });
-};
-displayMovements(account1.movements);
-
 const calcDisplayBalance = function (movements) {
   const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance} EUR`;
+  labelBalance.textContent = `${balance}€`;
 };
-calcDisplayBalance(account1.movements);
+
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${incomes}€`;
+
+  const outcomes = acc.movements
+    .filter(mov => mov < 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumOut.textContent = `${Math.abs(outcomes)}€`;
+
+  const interest = acc.movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
+    .filter((interest, i, arr) => {
+      return interest >= 1;
+    })
+    .reduce((acc, interest) => acc + interest, 0);
+  labelSumInterest.textContent = `${interest}€`;
+};
+
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
     acc.username = acc.owner
@@ -110,10 +96,76 @@ const createUsernames = function (accs) {
       .join('');
   });
 };
-
-const user = 'Steven Thomas Williams'; // stw
-
 createUsernames(accounts);
+
+/* Event handler */
+let currentAccount;
+btnLogin.addEventListener('click', function (e) {
+  /* Prevent form from submitting */
+  e.preventDefault();
+
+  /* Check if username is existing */
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+  console.log(currentAccount);
+
+  /* Check if user's pin is correct */
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    /* Display UI and message */
+    labelWelcome.textContent = `Welcome back ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = '100';
+
+    /* Clear input fields */
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginUsername.blur();
+    inputLoginPin.blur();
+
+    /* Display movements */
+    const displayMovements = function (movements) {
+      /* Remove existing data */
+      containerMovements.innerHTML = '';
+
+      movements.forEach(function (mov, i) {
+        const type = mov > 0 ? 'deposit' : 'withdrawal';
+
+        const html = `
+        <div class="movements__row">
+          <div class="movements__type movements__type--${type}">${
+          i + 1
+        } ${type}</div>
+          <div class="movements__value">${mov}€</div>
+        </div>`;
+
+        // This has no options where to insert the html into the container
+        // containerMovements.innerHTML += html;
+
+        // or
+
+        // This has options where to insert the html into the container
+        /* beforebegin, afterbegin, beforeend, afterend */
+        /* 
+          beforebegin
+          <p>
+            afterbegin
+            beforeend
+          </p>
+          afterend
+        */
+        containerMovements.insertAdjacentHTML('afterbegin', html);
+      });
+    };
+    displayMovements(currentAccount.movements);
+
+    /* Display balance */
+    calcDisplayBalance(currentAccount.movements);
+
+    /* Display summary */
+    calcDisplaySummary(currentAccount);
+  }
+});
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
@@ -378,40 +430,94 @@ TEST DATA 2: [16, 6, 10, 5, 6, 1, 4]
 GOOD LUCK 😀
 */
 
-function calcAverageHumanAge(ages) {
-  // const humanAges = ages.map(function (dogAge) {
-  //   if (dogAge <= 2) {
-  //     return 2 * dogAge;
-  //   } else {
-  //     return 16 + dogAge * 4;
-  //   }
-  // });
-  /* or */
+// function calcAverageHumanAge(ages) {
+// const humanAges = ages.map(function (dogAge) {
+//   if (dogAge <= 2) {
+//     return 2 * dogAge;
+//   } else {
+//     return 16 + dogAge * 4;
+//   }
+// });
+/* or */
 
-  const humanAges = ages.map(age => (age <= 2 ? 2 * age : 16 + age * 4));
+// const humanAges = ages.map(age => (age <= 2 ? 2 * age : 16 + age * 4));
 
-  // const adult = humanAge.filter(function (age) {
-  //   return age >= 18;
-  // });
+// const adult = humanAge.filter(function (age) {
+//   return age >= 18;
+// });
 
-  /* or */
+/* or */
 
-  const adults = humanAges.filter(age => age >= 18);
+// const adults = humanAges.filter(age => age >= 18);
 
-  // const average = adults.reduce(function (acc, age, i, arr) {
-  //   return (acc + age) / arr.length;
-  // }, 0);
-  // return average;
+// const average = adults.reduce(function (acc, age, i, arr) {
+//   return (acc + age) / arr.length;
+// }, 0);
+// return average;
 
-  /* or */
+/* or */
 
-  const average = adults.reduce(
-    (acc, age, i, arr) => acc + age / arr.length,
-    0
-  );
-  return average;
-}
+//   const average = adults.reduce(
+//     (acc, age, i, arr) => acc + age / arr.length,
+//     0
+//   );
+//   return average;
+// }
 
-const avg1 = calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
-const avg2 = calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
-console.log(avg1, avg2);
+// const avg1 = calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
+// const avg2 = calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
+// console.log(avg1, avg2);
+
+// const euroToUsd = 1.1;
+
+/* PIPELINE */
+// const totalDepositsUSD = movements
+//   .filter(mov => mov > 0)
+//   .map(mov => mov * euroToUsd)
+//   .reduce((acc, mov) => acc + mov, 0);
+
+// console.log(totalDepositsUSD);
+
+///////////////////////////////////////
+// Coding Challenge #3
+
+/* 
+Rewrite the 'calcAverageHumanAge' function from the previous challenge, but this time as an arrow function, and using chaining!
+
+TEST DATA 1: [5, 2, 4, 1, 15, 8, 3]
+TEST DATA 2: [16, 6, 10, 5, 6, 1, 4]
+
+GOOD LUCK 😀
+*/
+
+// const calcAverageHumanAge = ages =>
+//   ages
+//     .map(age => (age <= 2 ? 2 * age : 16 + age * 4))
+//     .filter(age => age >= 18)
+//     .reduce((acc, age, index, arr) => acc + age / arr.length, 0);
+
+// const data1 = calcAverageHumanAge([5, 2, 4, 1, 15, 8, 3]);
+// const data2 = calcAverageHumanAge([16, 6, 10, 5, 6, 1, 4]);
+// console.log(data1, data2);
+
+/* FIND - will return only the first element in the condition */
+// const firstWithdrawal = movements.find(mov => mov < 0);
+// console.log(movements);
+// console.log(movements.filter(mov => mov < 0));
+// console.log(firstWithdrawal);
+// console.log(accounts);
+/* Search login using find */
+// const account = accounts.find(acc => (acc.owner = 'Jessica Davis'));
+// console.log(account);
+
+// const search = 'Steven Thomas Williams';
+
+/* Using filter method */
+// console.log(accounts.filter(account => account.owner === search)[0]);
+
+/* Traditional - using for of loop */
+// for (const account of accounts) {
+//   if (account.owner === search) {
+//     console.log(account);
+//   }
+// }
