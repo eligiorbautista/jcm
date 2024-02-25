@@ -61,11 +61,50 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const calcDisplayBalance = function (movements) {
-  const balance = movements.reduce((acc, mov) => acc + mov, 0);
-  labelBalance.textContent = `${balance}€`;
+/* Functions */
+
+/* Display movements */
+const displayMovements = function (movements) {
+  /* Remove existing data */
+  containerMovements.innerHTML = '';
+
+  movements.forEach(function (mov, i) {
+    const type = mov > 0 ? 'deposit' : 'withdrawal';
+
+    const html = `
+    <div class="movements__row">
+      <div class="movements__type movements__type--${type}">${
+      i + 1
+    } ${type}</div>
+      <div class="movements__value">${mov}€</div>
+    </div>`;
+
+    // This has no options where to insert the html into the container
+    // containerMovements.innerHTML += html;
+
+    // or
+
+    // This has options where to insert the html into the container
+    /* beforebegin, afterbegin, beforeend, afterend */
+    /* 
+      beforebegin
+      <p>
+        afterbegin
+        beforeend
+      </p>
+      afterend
+    */
+    containerMovements.insertAdjacentHTML('afterbegin', html);
+  });
 };
 
+/* Display Balance */
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance}€`;
+};
+
+/* Display Summary */
 const calcDisplaySummary = function (acc) {
   const incomes = acc.movements
     .filter(mov => mov > 0)
@@ -87,6 +126,7 @@ const calcDisplaySummary = function (acc) {
   labelSumInterest.textContent = `${interest}€`;
 };
 
+/* Create usernames */
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
     acc.username = acc.owner
@@ -97,6 +137,18 @@ const createUsernames = function (accs) {
   });
 };
 createUsernames(accounts);
+
+/* Display UI */
+const updateUI = function (acc) {
+  /* Display movements */
+  displayMovements(acc.movements);
+
+  /* Display balance */
+  calcDisplayBalance(acc);
+
+  /* Display summary */
+  calcDisplaySummary(acc);
+};
 
 /* Event handler */
 let currentAccount;
@@ -123,48 +175,74 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.blur();
     inputLoginPin.blur();
 
-    /* Display movements */
-    const displayMovements = function (movements) {
-      /* Remove existing data */
-      containerMovements.innerHTML = '';
-
-      movements.forEach(function (mov, i) {
-        const type = mov > 0 ? 'deposit' : 'withdrawal';
-
-        const html = `
-        <div class="movements__row">
-          <div class="movements__type movements__type--${type}">${
-          i + 1
-        } ${type}</div>
-          <div class="movements__value">${mov}€</div>
-        </div>`;
-
-        // This has no options where to insert the html into the container
-        // containerMovements.innerHTML += html;
-
-        // or
-
-        // This has options where to insert the html into the container
-        /* beforebegin, afterbegin, beforeend, afterend */
-        /* 
-          beforebegin
-          <p>
-            afterbegin
-            beforeend
-          </p>
-          afterend
-        */
-        containerMovements.insertAdjacentHTML('afterbegin', html);
-      });
-    };
-    displayMovements(currentAccount.movements);
-
-    /* Display balance */
-    calcDisplayBalance(currentAccount.movements);
-
-    /* Display summary */
-    calcDisplaySummary(currentAccount);
+    /* Update UI */
+    updateUI(currentAccount);
   }
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const recieverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+  if (
+    amount > 0 &&
+    // recieverAcc &&
+    currentAccount.balance >= amount &&
+    recieverAcc?.usernmame !== currentAccount.username
+  ) {
+    // console.log(`Amount: `, amount);
+    // console.log(`Receiver: `, recieverAcc);
+
+    /* Doing the transfer */
+    console.log(`Transfer Valid`);
+    currentAccount.movements.push(-amount);
+    recieverAcc.movements.push(amount);
+
+    /* Update UI */
+    updateUI(currentAccount);
+  }
+});
+
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputLoanAmount.value);
+
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    /* Add movement */
+    currentAccount.movements.push(amount);
+
+    /* Update UI */
+    updateUI(currentAccount);
+  }
+});
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  if (
+    currentAccount.username === inputCloseUsername.value &&
+    currentAccount.pin === Number(inputClosePin.value)
+  ) {
+    console.log(`Delete`);
+
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username
+    );
+    console.log(index);
+    // .indexOf(23)
+
+    /* Delete account */
+    accounts.splice(index, 1);
+    labelWelcome.textContent = 'Log in to get started';
+
+    /* Hide UI */
+    containerApp.style.opacity = 0;
+  }
+  /* Clear fields */
+  inputCloseUsername.value = inputClosePin.value = '';
 });
 
 /////////////////////////////////////////////////
@@ -521,3 +599,66 @@ GOOD LUCK 😀
 //     console.log(account);
 //   }
 // }
+
+// console.log(movements);
+
+/* EQUALITY */
+// console.log(movements.includes(-130));
+
+/* SOME: CONDITION - one element*/
+// console.log(movements.some(mov => mov === -130));
+
+// const anyDepositsFilter = movements.filter(mov => mov > 0);
+// const anyWithdrawalsFilter = movements.filter(mov => mov < 0);
+// const anyDeposits = movements.some(mov => mov > 0);
+// const anyWithdrawals = movements.some(mov => mov < 0);
+// console.log('Deposits Filter : ', anyDepositsFilter);
+// console.log('Withdrawals Filter : ', anyWithdrawalsFilter);
+// console.log('Deposits Some :', anyDeposits);
+// console.log('Withdrawals Some :', anyWithdrawals);
+
+/* EVERY - all elements*/
+// console.log(
+//   "Account 4's Deposits Every : ",
+//   account4.movements.every(mov => mov > 0)
+// );
+// console.log(
+//   "Account 4's Withdrawals Every : ",
+//   account4.movements.every(mov => mov < 0)
+// );
+
+/* Seperate callback */
+// const deposit = mov => mov > 0;
+// console.log(movements.some(deposit));
+// console.log(movements.every(deposit));
+// console.log(movements.filter(deposit));
+
+/* FLAT & MAP*/
+const arr = [[1, 2, 3], [4, 5, 6], 7, 8];
+console.log(arr.flat()); /* Default - 1 */
+
+const arrDeep = [[[1, 2], 3], [4, [5, 6]], 7, 8];
+console.log(arrDeep.flat(2));
+
+/*  */
+
+const accountMovements = accounts.map(acc => acc.movements);
+const allMovements = accountMovements.flat();
+console.log(accountMovements);
+console.log(allMovements);
+
+const overalBalance = allMovements.reduce((acc, mov) => acc + mov, 0);
+console.log(`Overal Balance : ${overalBalance}`);
+
+/* FLAT */
+const overalBalanceFlat = accounts
+  .map(acc => acc.movements)
+  .flat()
+  .reduce((acc, mov) => acc + mov, 0);
+console.log(`Overal Balance (flat) : ${overalBalanceFlat}`);
+
+/* FLATMAP */
+const overalBalanceFlatMap = accounts
+  .flatMap(acc => acc.movements)
+  .reduce((acc, mov) => acc + mov, 0);
+console.log(`Overal Balance (flatmap) : ${overalBalanceFlatMap}`);
